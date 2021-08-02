@@ -395,7 +395,7 @@ instance Pretty FromCardanoError where
 
 data ToCardanoError
     = EvaluationError Api.EvaluationError
-    | TxBodyError (C.TxBodyError C.AlonzoEra)
+    | TxBodyError C.TxBodyError
     | DeserialisationError
     | InvalidValidityRange
     | ValueNotPureAda
