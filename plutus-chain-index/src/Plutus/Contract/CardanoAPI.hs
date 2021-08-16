@@ -1,7 +1,9 @@
-{-# LANGUAGE GADTs             #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE ViewPatterns      #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE ViewPatterns       #-}
 {-|
 
 Interface to the transaction types from 'cardano-api'
@@ -36,11 +38,14 @@ module Plutus.Contract.CardanoAPI(
   , toCardanoPaymentKeyHash
   , toCardanoScriptHash
   , ToCardanoError(..)
+  , FromCardanoError(..)
 ) where
 
 import qualified Cardano.Api                 as C
 import qualified Cardano.Api.Shelley         as C
+import           Cardano.BM.Data.Tracer      (ToObject (..))
 import qualified Codec.Serialise             as Codec
+import           Data.Aeson                  (FromJSON, ToJSON)
 import           Data.Bifunctor              (first)
 import           Data.ByteString             as BS
 import qualified Data.ByteString.Lazy        as BSL
@@ -48,6 +53,7 @@ import           Data.ByteString.Short       as BSS
 import qualified Data.Map                    as Map
 import qualified Data.Set                    as Set
 import           Data.Text.Prettyprint.Doc   (Pretty (..), colon, (<+>))
+import           GHC.Generics                (Generic)
 import qualified Ledger                      as P
 import qualified Ledger.Ada                  as Ada
 import qualified Plutus.V1.Ledger.Api        as Api
@@ -389,6 +395,8 @@ data FromCardanoError
     = SimpleScriptsNotSupported
     | ByronAddressesNotSupported
     | StakeAddressPointersNotSupported
+    deriving stock (Show, Eq, Generic)
+    deriving anyclass (FromJSON, ToJSON, ToObject)
 
 instance Pretty FromCardanoError where
     pretty SimpleScriptsNotSupported        = "Simple scripts are not supported"

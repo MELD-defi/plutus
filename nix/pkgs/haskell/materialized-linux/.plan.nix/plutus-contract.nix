@@ -88,7 +88,6 @@
           "Data/Text/Extras"
           "Data/UUID/Extras"
           "Plutus/Contract"
-          "Plutus/Contract/CardanoAPI"
           "Plutus/Contract/Effects"
           "Plutus/Contract/Request"
           "Plutus/Contract/Checkpoint"

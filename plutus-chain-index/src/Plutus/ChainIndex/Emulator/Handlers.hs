@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia        #-}
@@ -21,11 +22,14 @@ module Plutus.ChainIndex.Emulator.Handlers(
     , ChainIndexLog(..)
     ) where
 
+import           Cardano.BM.Data.Tracer               (ToObject (..))
 import           Control.Lens                         (at, ix, makeLenses, over, preview, set, to, view, (&))
 import           Control.Monad.Freer                  (Eff, Member, type (~>))
 import           Control.Monad.Freer.Error            (Error, throwError)
 import           Control.Monad.Freer.Extras.Log       (LogMsg, logDebug, logError, logWarn)
 import           Control.Monad.Freer.State            (State, get, gets, modify, put)
+
+import           Data.Aeson                           (FromJSON, ToJSON)
 import           Data.Default                         (Default (..))
 import           Data.FingerTree                      (Measured (..))
 import           Data.Maybe                           (catMaybes, fromMaybe)
@@ -42,6 +46,7 @@ import           Plutus.ChainIndex.Types              (Tip (..), pageOf)
 import           Plutus.ChainIndex.UtxoState          (InsertUtxoPosition, InsertUtxoSuccess (..), RollbackResult (..),
                                                        UtxoIndex, isUnspentOutput, tip)
 import qualified Plutus.ChainIndex.UtxoState          as UtxoState
+import           Plutus.Contract.CardanoAPI           (FromCardanoError (..))
 
 data ChainIndexEmulatorState =
     ChainIndexEmulatorState
@@ -152,11 +157,15 @@ data ChainIndexError =
     InsertionFailed UtxoState.InsertUtxoFailed
     | RollbackFailed UtxoState.RollbackFailed
     | QueryFailedNoTip -- ^ Query failed because the chain index does not have a tip (not synchronised with node)
-    deriving Show
+    deriving stock (Generic, Show)
+    deriving anyclass (FromJSON, ToJSON)
 
 data ChainIndexLog =
     InsertionSuccess Tip InsertUtxoPosition
+    | ConversionFailed FromCardanoError
     | RollbackSuccess Tip
     | Err ChainIndexError
     | TxNotFound TxId
     | TipIsGenesis
+    deriving stock (Generic)
+    deriving anyclass (FromJSON, ToJSON, ToObject)

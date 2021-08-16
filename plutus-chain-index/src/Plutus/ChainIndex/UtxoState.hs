@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DerivingStrategies    #-}
 {-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -32,6 +33,7 @@ module Plutus.ChainIndex.UtxoState(
     ) where
 
 import           Control.Lens            (makeLenses, view)
+import           Data.Aeson              (FromJSON, ToJSON)
 import           Data.FingerTree         (FingerTree, Measured (..))
 import qualified Data.FingerTree         as FT
 import           Data.Function           (on)
@@ -50,6 +52,7 @@ data TxUtxoBalance =
         , _tubUnmatchedSpentInputs :: Set TxOutRef -- ^ Outputs spent by the transaction(s)
         }
         deriving stock (Eq, Show, Generic)
+        deriving anyclass (FromJSON, ToJSON)
 
 makeLenses ''TxUtxoBalance
 
@@ -73,6 +76,7 @@ data UtxoState =
         }
         deriving stock (Eq, Show, Generic)
         deriving (Semigroup, Monoid) via (GenericSemigroupMonoid UtxoState)
+        deriving anyclass (FromJSON, ToJSON)
 
 makeLenses ''UtxoState
 
@@ -116,7 +120,8 @@ fromBlock tip_ transactions =
 data InsertUtxoPosition =
     InsertAtEnd -- ^ The utxo state was added to the end. Returns the new index
     | InsertBeforeEnd -- ^ The utxo state was added somewhere before the end. Returns the new index and the tip
-    deriving stock (Eq, Ord, Show)
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass (FromJSON, ToJSON)
 
 data InsertUtxoSuccess =
     InsertUtxoSuccess
@@ -128,7 +133,8 @@ data InsertUtxoSuccess =
 data InsertUtxoFailed =
     DuplicateBlock Tip -- ^ Insertion failed as there was already a block with the given number
     | InsertUtxoNoTip -- ^ The '_usTip' field of the argument was 'Last Nothing'
-    deriving stock (Eq, Ord, Show)
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass (FromJSON, ToJSON)
 
 -- | Insert a 'UtxoState' into the index
 insert :: UtxoState -> UtxoIndex -> Either InsertUtxoFailed InsertUtxoSuccess
@@ -145,7 +151,8 @@ data RollbackFailed =
     RollbackNoTip  -- ^ Rollback failed because the utxo index had no tip (not synchronised)
     | TipMismatch { foundTip :: Tip, targetTip :: Tip } -- ^ Unable to roll back to 'expectedTip' because the tip at that position was different
     | OldTipNotFound Tip -- ^ Unable to find the old tip
-    deriving stock (Eq, Ord, Show)
+    deriving stock (Eq, Ord, Show, Generic)
+    deriving anyclass (FromJSON, ToJSON)
 
 data RollbackResult =
     RollbackResult

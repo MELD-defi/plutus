@@ -40,8 +40,14 @@ library
         Plutus.ChainIndex.Tx
         Plutus.ChainIndex.Types
         Plutus.ChainIndex.UtxoState
+        Plutus.Monitoring.Util
+        Cardano.Protocol.Socket.Type
+        Cardano.Protocol.Socket.Client
+        Plutus.ChainIndex.Compatibility
+        Plutus.Contract.CardanoAPI
     hs-source-dirs: src
     build-depends:
+        plutus-core -any,
         plutus-ledger -any,
         plutus-ledger-api -any,
         plutus-tx -any,
@@ -49,13 +55,31 @@ library
     build-depends:
         aeson -any,
         base >=4.7 && <5,
+        cardano-api -any,
+        cardano-ledger-byron -any,
         containers -any,
+        cryptonite -any,
         data-default -any,
+        exceptions -any,
         fingertree -any,
         freer-simple -any,
+        io-classes -any,
+        iohk-monitoring -any,
         lens -any,
+        memory -any,
+        nothunks -any,
+        ouroboros-network -any,
+        ouroboros-network-framework -any,
+        ouroboros-consensus -any,
+        ouroboros-consensus-byron -any,
+        ouroboros-consensus-cardano -any,
+        ouroboros-consensus-shelley -any,
         prettyprinter >=1.1.0.1,
         semigroups -any,
+        serialise -any,
+        time-units -any,
+        typed-protocols-examples -any,
+        unordered-containers -any,
         bytestring -any,
         data-default -any,
         text -any,
@@ -107,7 +131,13 @@ executable plutus-chain-index
   build-depends:
     base >=4.9 && <5,
     aeson -any,
+    cardano-api -any,
+    cardano-slotting -any,
+    freer-extras -any,
+    freer-simple -any,
     optparse-applicative -any,
+    plutus-chain-index -any,
+    plutus-ledger -any,
     iohk-monitoring -any,
     yaml -any,
     prettyprinter >=1.1.0.1,
