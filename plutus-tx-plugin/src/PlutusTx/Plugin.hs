@@ -269,6 +269,10 @@ compileMarkedExprs expr = do
             inner
           | markerName == GHC.idName fid -> compileMarkedExprOrDefer (show fs_locStr) codeTy inner
       e@(GHC.Var fid) | markerName == GHC.idName fid -> throwError . NoContext . InvalidMarkerError . GHC.showSDocUnsafe $ GHC.ppr e
+      -- Lazy ||
+      GHC.App (GHC.App (GHC.Var fid) a) b | GHC.getOccString fid == "||" -> compileMarkedExprs $ GHC.mkIfThenElse a a b
+      -- Lazy &&
+      GHC.App (GHC.App (GHC.Var fid) a) b | GHC.getOccString fid == "&&" -> compileMarkedExprs $ GHC.mkIfThenElse a b a
       GHC.App e a -> GHC.App <$> compileMarkedExprs e <*> compileMarkedExprs a
       GHC.Lam b e -> GHC.Lam b <$> compileMarkedExprs e
       GHC.Let bnd e -> GHC.Let <$> compileBind bnd <*> compileMarkedExprs e
