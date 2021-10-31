@@ -31,12 +31,7 @@
       )
     )
     (datatypebind
-      (datatype
-        (tyvardecl Animal (type))
-
-        Animal_match
-        (vardecl Cat Animal) (vardecl Dog Animal)
-      )
+      (datatype (tyvardecl Animal (type))  Animal_match (vardecl Cat Animal))
     )
     (datatypebind
       (datatype
@@ -135,66 +130,11 @@
         )
       )
     )
-    (datatypebind
-      (datatype
-        (tyvardecl Person (type))
-
-        Person_match
-        (vardecl Jane Person) (vardecl Jim Person)
-      )
-    )
-    (termbind
-      (strict)
-      (vardecl cage (fun Person (con integer)))
-      (lam
-        ds
-        Person
-        [
-          [ { [ Person_match ds ] (con integer) } (con integer 35) ]
-          (con integer 30)
-        ]
-      )
-    )
-    (termbind
-      (strict)
-      (vardecl clikesAnimal (fun Person (fun Animal Bool)))
-      (lam
-        ds
-        Person
-        (lam
-          ds
-          Animal
-          {
-            [
-              [
-                { [ Person_match ds ] (all dead (type) Bool) }
-                (abs
-                  dead
-                  (type)
-                  {
-                    [
-                      [
-                        { [ Animal_match ds ] (all dead (type) Bool) }
-                        (abs dead (type) True)
-                      ]
-                      (abs dead (type) False)
-                    ]
-                    (all dead (type) dead)
-                  }
-                )
-              ]
-              (abs dead (type) False)
-            ]
-            (all dead (type) dead)
-          }
-        )
-      )
-    )
     (termbind
       (nonstrict)
       (vardecl fPersonLikePerson [ PersonLike Person ])
-      [ [ { CConsPersonLike Person } cage ] clikesAnimal ]
+      [ [ { CConsPersonLike Person } (con unit ()) ] (con unit ()) ]
     )
-    (lam ds Person [ [ { predicate Person } fPersonLikePerson ] ds ])
+    (con unit ())
   )
 )

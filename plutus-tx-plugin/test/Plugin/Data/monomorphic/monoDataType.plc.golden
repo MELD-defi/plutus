@@ -1,7 +1,1 @@
-(program
-  (let
-    (nonrec)
-    (datatypebind (datatype (tyvardecl MyMonoData (type))  MyMonoData_match ))
-    (lam ds MyMonoData ds)
-  )
-)
+(program (con unit ()))

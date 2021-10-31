@@ -167,10 +167,11 @@ inline
     -> m (Term tyname name uni fun a)
 inline t = let
         inlineInfo :: InlineInfo
-        inlineInfo = InlineInfo (snd deps) usgs
+        inlineInfo = InlineInfo s usgs
         -- We actually just want the variable strictness information here!
-        deps :: (G.Graph Deps.Node, Map.Map PLC.Unique Strictness)
+        deps :: (G.Graph Deps.Node, Deps.DepState)
         deps = Deps.runTermDeps t
+        (s, _, _, _) = snd deps
         usgs :: Map.Map Unique Int
         usgs = Usages.runTermUsages t
     in liftQuote $ flip evalStateT mempty $ flip runReaderT inlineInfo $ processTerm t

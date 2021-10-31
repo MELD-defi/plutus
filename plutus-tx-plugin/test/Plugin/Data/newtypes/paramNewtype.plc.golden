@@ -1,11 +1,1 @@
-(program
-  (let
-    (nonrec)
-    (datatypebind
-      (datatype
-        (tyvardecl Maybe (fun (type) (type))) (tyvardecl a (type)) Maybe_match 
-      )
-    )
-    (lam ds [ (lam a (type) [ Maybe a ]) (con integer) ] ds)
-  )
-)
+(program (con unit ()))

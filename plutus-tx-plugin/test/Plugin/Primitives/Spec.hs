@@ -30,10 +30,10 @@ primitives = testNested "Primitives" [
   , goldenPir "false" false
   , goldenPir "bool" stableTrue
   , goldenPir "and" andPlc
-  , goldenUEval "andApply" [ toUPlc andPlc, toUPlc stableTrue, toUPlc stableFalse ]
+  , goldenUEval "andApply" [ toUPlc stableAnd, toUPlc stableTrue, toUPlc stableFalse ]
   , goldenPir "tuple" tuple
   , goldenPir "tupleMatch" tupleMatch
-  , goldenUEval "tupleConstDest" [ toUPlc tupleMatch, toUPlc tuple ]
+  , goldenUEval "tupleConstDest" [ toUPlc stableTupleMatch, toUPlc tuple ]
   , goldenPir "intCompare" intCompare
   , goldenPir "intEq" intEq
   , goldenUEval "intEqApply" [ toUPlc intEq, toUPlc int, toUPlc int ]
@@ -41,7 +41,7 @@ primitives = testNested "Primitives" [
   , goldenPir "intPlus" intPlus
   , goldenPir "intDiv" intDiv
   , goldenUEval "intPlusApply" [ toUPlc intPlus, toUPlc int, toUPlc int2 ]
-  , goldenPir "error" errorPlc
+  , goldenPir "error" stableErrorPlc
   , goldenPir "ifThenElse" ifThenElse
   , goldenUEval "ifThenElseApply" [ toUPlc ifThenElse, toUPlc int, toUPlc int2 ]
   , goldenPir "emptyByteString" emptyByteString

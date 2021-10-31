@@ -1,9 +1,1 @@
-(program
-  (let
-    (nonrec)
-    (datatypebind
-      (datatype (tyvardecl RecordNewtype (type))  RecordNewtype_match )
-    )
-    (lam ds RecordNewtype ds)
-  )
-)
+(program (con unit ()))

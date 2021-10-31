@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeOperators    #-}
 -- | Functions for computing the dependency graph of variables within a term or type. A "dependency" between
 -- two nodes "A depends on B" means that B cannot be removed from the program without also removing A.
-module PlutusIR.Analysis.Dependencies (Node (..), DepGraph, StrictnessMap, runTermDeps, runTypeDeps) where
+module PlutusIR.Analysis.Dependencies (Node (..), DepGraph, DepState, StrictnessMap, runTermDeps, runTypeDeps) where
 
 import qualified PlutusCore               as PLC
 import qualified PlutusCore.Constant      as PLC
@@ -29,7 +29,11 @@ import           Data.Foldable
 
 type DepCtx term = Node
 type StrictnessMap = Map.Map PLC.Unique Strictness
-type DepState = StrictnessMap
+type DeConstructorMap = Map.Map PLC.Unique [PLC.Unique]
+-- FIXME: Don't bother, these are deliberate trash just to test some water
+type DataTypes = [(PLC.Unique, PLC.Unique)] -- type to destructor
+type Variables = [(PLC.Unique, PLC.Unique)] -- var to type
+type DepState = (StrictnessMap, DeConstructorMap, DataTypes, Variables)
 
 -- | A node in a dependency graph. Either a specific 'PLC.Unique', or a specific
 -- node indicating the root of the graph. We need the root node because when computing the
@@ -45,7 +49,7 @@ varStrictnessFun ::
     (MonadState DepState m, PLC.HasUnique name u)
     => m (name -> Strictness)
 varStrictnessFun = do
-    strictnessMap <- get
+    (strictnessMap, _, _, _) <- get
     pure $ \n' -> Map.findWithDefault NonStrict (n' ^. PLC.theUnique) strictnessMap
 
 -- | Compute the dependency graph of a 'Term'. The 'Root' node will correspond to the term itself.
@@ -61,8 +65,8 @@ runTermDeps
     :: (DepGraph g, PLC.HasUnique tyname PLC.TypeUnique, PLC.HasUnique name PLC.TermUnique,
        PLC.ToBuiltinMeaning uni fun)
     => Term tyname name uni fun a
-    -> (g, StrictnessMap)
-runTermDeps t = flip runState mempty $ flip runReaderT Root $ termDeps t
+    -> (g, DepState)
+runTermDeps t = flip runState (mempty, mempty, mempty, mempty) $ flip runReaderT Root $ termDeps t
 
 -- | Compute the dependency graph of a 'Type'. The 'Root' node will correspond to the type itself.
 --
@@ -121,6 +125,30 @@ bindingDeps
     => Binding tyname name uni fun a
     -> m g
 bindingDeps b = case b of
+    TermBind _ strictness d@(VarDecl _ n (TyFun _ (TyVar _ n') _)) rhs -> do
+        modify (\(s, ds, t, v) -> (s, ds, t, (n ^. PLC.theUnique, n' ^. PLC.theUnique) : v))
+        vDeps <- varDeclDeps d
+        tDeps <- withCurrent n $ termDeps rhs
+
+        -- See Note [Strict term bindings and dependencies]
+        strictnessFun <- varStrictnessFun
+        evalDeps <- case strictness of
+            Strict | not (isPure strictnessFun rhs) -> currentDependsOn [n ^. PLC.theUnique]
+            _                                       -> pure G.empty
+
+        pure $ G.overlays [vDeps, tDeps, evalDeps]
+    TermBind _ strictness d@(VarDecl _ n (TyFun _ (TyApp _ (TyVar _ n') _) _)) rhs -> do
+        modify (\(s, ds, t, v) -> (s, ds, t, (n ^. PLC.theUnique, n' ^. PLC.theUnique) : v))
+        vDeps <- varDeclDeps d
+        tDeps <- withCurrent n $ termDeps rhs
+
+        -- See Note [Strict term bindings and dependencies]
+        strictnessFun <- varStrictnessFun
+        evalDeps <- case strictness of
+            Strict | not (isPure strictnessFun rhs) -> currentDependsOn [n ^. PLC.theUnique]
+            _                                       -> pure G.empty
+
+        pure $ G.overlays [vDeps, tDeps, evalDeps]
     TermBind _ strictness d@(VarDecl _ n _) rhs -> do
         vDeps <- varDeclDeps d
         tDeps <- withCurrent n $ termDeps rhs
@@ -137,29 +165,25 @@ bindingDeps b = case b of
         tDeps <- withCurrent n $ typeDeps rhs
         pure $ G.overlay vDeps tDeps
     DatatypeBind _ (Datatype _ d tvs destr constrs) -> do
-        vDeps <- tyVarDeclDeps d
+        let vDeps = (\(VarDecl _ n _) -> G.connect (G.vertex (Variable (n ^. PLC.theUnique))) (G.vertex (Variable (_tyVarDeclName d ^. PLC.theUnique)))) <$> constrs
         tvDeps <- traverse tyVarDeclDeps tvs
         cstrDeps <- traverse varDeclDeps constrs
-        -- Making a match depends on all constructors for the time being.
-        -- TODO: Erase impossible cases and their respective constructors.
-        let destrDeps = G.connect (G.vertex (Variable (destr ^. PLC.theUnique)))
-                                  (G.vertices (Variable . view PLC.theUnique . _varDeclName <$> constrs))
-        -- TODO: Erase unused types.
+        modify (\(s, ds, t, v) -> (s, Map.insert (destr ^. PLC.theUnique) (fmap (view PLC.theUnique) constrs) ds, (_tyVarDeclName d ^. PLC.theUnique, destr ^. PLC.theUnique) : t, v))
         let tyus = fmap (view PLC.theUnique) $ _tyVarDeclName d : fmap _tyVarDeclName tvs
         let localDeps = G.clique (fmap Variable tyus)
-        pure $ G.overlays $ [vDeps] ++ tvDeps ++ [destrDeps] ++ cstrDeps ++ [localDeps]
+        pure $ G.overlays $ vDeps ++ tvDeps ++ cstrDeps ++ [localDeps]
 
 bindingStrictness
     :: (MonadState DepState m, PLC.HasUnique name PLC.TermUnique)
     => Binding tyname name uni fun a
     -> m ()
 bindingStrictness b = case b of
-    TermBind _ strictness (VarDecl _ n _) _ -> modify (Map.insert (n ^. PLC.theUnique) strictness)
+    TermBind _ strictness (VarDecl _ n _) _ -> modify (\(s, d, t, v) -> (Map.insert (n ^. PLC.theUnique) strictness s, d, t, v))
     TypeBind {} -> pure ()
     DatatypeBind _ (Datatype _ _ _ destr constrs) -> do
         -- Constructors and destructor are bound strictly
-        for_ constrs $ \(VarDecl _ n _) -> modify (Map.insert (n ^. PLC.theUnique) Strict)
-        modify (Map.insert (destr ^. PLC.theUnique) Strict)
+        for_ constrs $ \(VarDecl _ n _) -> modify (\(s, d, t, v) -> (Map.insert (n ^. PLC.theUnique) Strict s, d, t, v))
+        modify (\(s, d, t, v) -> (Map.insert (destr ^. PLC.theUnique) Strict s, d, t, v))
 
 varDeclDeps
     :: (DepGraph g, MonadReader (DepCtx term) m, PLC.HasUnique tyname PLC.TypeUnique, PLC.HasUnique name PLC.TermUnique)
@@ -192,10 +216,10 @@ termDeps = \case
     Var _ n -> currentDependsOn [n ^. PLC.theUnique]
     LamAbs _ n ty t -> do
         -- Record that lambda-bound variables are strict
-        modify (Map.insert (n ^. PLC.theUnique) Strict)
+        modify (\(s, d, t, v) -> (Map.insert (n ^. PLC.theUnique) Strict s, d, t, v))
         tds <- termDeps t
         tyds <- typeDeps ty
-        pure $ G.overlays $ [tds, tyds]
+        pure $ G.overlays [tds, tyds]
     x -> do
         tds <- traverse termDeps (x ^.. termSubterms)
         tyds <- traverse typeDeps (x ^.. termSubtypes)

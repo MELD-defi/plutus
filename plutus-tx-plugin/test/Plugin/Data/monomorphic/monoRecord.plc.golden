@@ -1,9 +1,1 @@
-(program
-  (let
-    (nonrec)
-    (datatypebind
-      (datatype (tyvardecl MyMonoRecord (type))  MyMonoRecord_match )
-    )
-    (lam ds MyMonoRecord ds)
-  )
-)
+(program (con unit ()))

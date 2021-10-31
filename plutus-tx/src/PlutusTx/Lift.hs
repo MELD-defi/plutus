@@ -63,6 +63,9 @@ safeLift
        , AsError e uni fun (Provenance ()), MonadError e m, MonadQuote m
        , PLC.Typecheckable uni fun
        , PrettyPrintable uni fun
+       , PLC.Everywhere uni Show
+       , Show fun
+       , PLC.Contains uni ()
        )
     => a -> m (UPLC.Term UPLC.NamedDeBruijn uni fun ())
 safeLift x = do
@@ -73,7 +76,7 @@ safeLift x = do
     -- TODO: Optimize the whole lifting process
     let ccConfig = set (ccOpts . coMaxSimplifierIterations) 0 $
                    set (ccOpts . coTruncateTypes) False $
-                   (toDefaultCompilationCtx tcConfig)
+                   toDefaultCompilationCtx tcConfig
     compiled <- flip runReaderT ccConfig $ compileTerm lifted
     let erased = UPLC.erase compiled
     db <- UPLC.deBruijnTerm $ UPLC.simplifyTerm erased
@@ -88,6 +91,9 @@ safeLiftProgram
        , AsError e uni fun (Provenance ()), MonadError e m, MonadQuote m
        , PLC.Typecheckable uni fun
        , PrettyPrintable uni fun
+       , PLC.Everywhere uni Show
+       , Show fun
+       , PLC.Contains uni ()
        )
     => a -> m (UPLC.Program UPLC.NamedDeBruijn uni fun ())
 safeLiftProgram x = UPLC.Program () (PLC.defaultVersion ()) <$> safeLift x
@@ -100,6 +106,9 @@ safeLiftCode
        , AsError e uni fun (Provenance ()), MonadError e m, MonadQuote m
        , PLC.Typecheckable uni fun
        , PrettyPrintable uni fun
+       , PLC.Everywhere uni Show
+       , Show fun
+       , PLC.Contains uni ()
        )
     => a -> m (CompiledCodeIn uni fun a)
 safeLiftCode x = DeserializedCode <$> safeLiftProgram x <*> pure Nothing
@@ -114,14 +123,25 @@ unsafely ma = runQuote $ do
         Right t -> pure t
 
 -- | Get a Plutus Core term corresponding to the given value, throwing any errors that occur as exceptions and ignoring fresh names.
-lift
-    :: (Lift.Lift uni a, Throwable uni fun, PLC.Typecheckable uni fun)
+lift ::
+    ( Lift.Lift uni a, Throwable uni fun
+    , PLC.Typecheckable uni fun
+    , PLC.Everywhere uni Show
+    , Show fun
+    , PLC.Contains uni ()
+    )
     => a -> UPLC.Term UPLC.NamedDeBruijn uni fun ()
 lift a = unsafely $ safeLift a
 
 -- | Get a Plutus Core program corresponding to the given value, throwing any errors that occur as exceptions and ignoring fresh names.
-liftProgram
-    :: (Lift.Lift uni a, Throwable uni fun, PLC.Typecheckable uni fun)
+liftProgram ::
+    ( Lift.Lift uni a
+    , Throwable uni fun
+    , PLC.Typecheckable uni fun
+    , PLC.Everywhere uni Show
+    , Show fun
+    , PLC.Contains uni ()
+    )
     => a -> UPLC.Program UPLC.NamedDeBruijn uni fun ()
 liftProgram x = UPLC.Program () (PLC.defaultVersion ()) $ lift x
 
@@ -132,8 +152,14 @@ liftProgramDef
 liftProgramDef = liftProgram
 
 -- | Get a Plutus Core program corresponding to the given value as a 'CompiledCodeIn', throwing any errors that occur as exceptions and ignoring fresh names.
-liftCode
-    :: (Lift.Lift uni a, Throwable uni fun, PLC.Typecheckable uni fun)
+liftCode ::
+    ( Lift.Lift uni a
+    , Throwable uni fun
+    , PLC.Typecheckable uni fun
+    , PLC.Everywhere uni Show
+    , Show fun
+    , PLC.Contains uni ()
+    )
     => a -> CompiledCodeIn uni fun a
 liftCode x = unsafely $ safeLiftCode x
 
@@ -160,6 +186,9 @@ typeCheckAgainst
        , PLC.GEq uni
        , PLC.Typecheckable uni fun
        , PrettyPrintable uni fun
+       , PLC.Everywhere uni Show
+       , Show fun
+       , PLC.Contains uni ()
        )
     => Proxy a
     -> PLC.Term PLC.TyName PLC.Name uni fun ()
@@ -194,6 +223,9 @@ typeCode
        , PLC.GEq uni
        , PLC.Typecheckable uni fun
        , PrettyPrintable uni fun
+       , PLC.Everywhere uni Show
+       , Show fun
+       , PLC.Contains uni ()
        )
     => Proxy a
     -> PLC.Program PLC.TyName PLC.Name uni fun ()

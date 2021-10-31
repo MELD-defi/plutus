@@ -2,14 +2,6 @@
   (let
     (nonrec)
     (datatypebind
-      (datatype
-        (tyvardecl MyEnum (type))
-
-        MyEnum_match
-        (vardecl Enum MyEnum) (vardecl Enum MyEnum)
-      )
-    )
-    (datatypebind
       (datatype (tyvardecl Unit (type))  Unit_match (vardecl Unit Unit))
     )
     (termbind
@@ -27,19 +19,6 @@
         (lam x Unit [ { error a } [ { [ Unit_match x ] (con unit) } unitval ] ])
       )
     )
-    (lam
-      ds
-      MyEnum
-      {
-        [
-          [
-            { [ MyEnum_match ds ] (all dead (type) (con integer)) }
-            (abs dead (type) (con integer 1))
-          ]
-          (abs dead (type) [ { error (con integer) } Unit ])
-        ]
-        (all dead (type) dead)
-      }
-    )
+    (con unit ())
   )
 )

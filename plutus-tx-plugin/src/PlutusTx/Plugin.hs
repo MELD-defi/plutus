@@ -56,6 +56,7 @@ import           Text.Read                     (readMaybe)
 import           System.IO                     (openTempFile)
 import           System.IO.Unsafe              (unsafePerformIO)
 
+import           Debug.Trace
 data PluginOptions = PluginOptions {
     poDoTypecheck                      :: Bool
     , poDeferErrors                    :: Bool
@@ -388,10 +389,14 @@ runCompiler moduleName opts expr = do
     pirT <- PIR.runDefT () $ compileExprWithDefs expr
     when (poDumpPir opts) . liftIO $ dumpFlat (PIR.Program () pirT) "initial PIR program" (moduleName ++ ".pir-initial.flat")
 
+    -- traceShow pirT (pure ())
+
     -- Pir -> (Simplified) Pir pass. We can then dump/store a more legible PIR program.
     spirT <- flip runReaderT pirCtx $ PIR.compileToReadable pirT
     let spirP = PIR.Program () . void $ spirT
     when (poDumpPir opts) . liftIO $ dumpFlat spirP "simplified PIR program" (moduleName ++ ".pir-simplified.flat")
+
+    -- traceShow spirT (pure ())
 
     -- (Simplified) Pir -> Plc translation.
     plcT <- flip runReaderT pirCtx $ PIR.compileReadableToPlc spirT

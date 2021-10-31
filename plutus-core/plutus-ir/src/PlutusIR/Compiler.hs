@@ -146,7 +146,15 @@ check arg = do
     -- the typechecker requires global uniqueness, so rename here
     if shouldCheck then typeCheckTerm =<< PLC.rename arg else pure ()
 
-removeDeadBindings :: Compiling m e uni fun a => Term TyName Name uni fun b -> m (Term TyName Name uni fun b)
+removeDeadBindings ::
+  ( Compiling m e uni fun a
+  , PLC.Everywhere uni Show
+  , Show b
+  , Show fun
+  , PLC.Contains uni ()
+  )
+  => Term TyName Name uni fun b
+  -> m (Term TyName Name uni fun b)
 removeDeadBindings t = do
   tt <- onOption coTruncateTypes
   DeadCode.removeDeadBindings tt t
@@ -154,8 +162,13 @@ removeDeadBindings t = do
 -- | The 1st half of the PIR compiler pipeline up to floating/merging the lets.
 -- We stop momentarily here to give a chance to the tx-plugin
 -- to dump a "readable" version of pir (i.e. floated).
-compileToReadable
-  :: (Compiling m e uni fun a, b ~ Provenance a)
+compileToReadable ::
+  ( Compiling m e uni fun a, b ~ Provenance a
+  , Show a
+  , Show fun
+  , PLC.Everywhere uni Show
+  , PLC.Contains uni ()
+  )
   => Term TyName Name uni fun a
   -> m (Term TyName Name uni fun b)
 compileToReadable =
@@ -175,7 +188,15 @@ compileToReadable =
 -- | The 2nd half of the PIR compiler pipeline.
 -- Compiles a 'Term' into a PLC Term, by removing/translating step-by-step the PIR's language constructs to PLC.
 -- Note: the result *does* have globally unique names.
-compileReadableToPlc :: (Compiling m e uni fun a, b ~ Provenance a) => Term TyName Name uni fun b -> m (PLCTerm uni fun a)
+compileReadableToPlc ::
+  ( Compiling m e uni fun a, b ~ Provenance a
+  , Show a
+  , Show fun
+  , PLC.Everywhere uni Show
+  , PLC.Contains uni ()
+  )
+  => Term TyName Name uni fun b
+  -> m (PLCTerm uni fun a)
 compileReadableToPlc =
     (<$ logVerbose "  !!! compileNonStrictBindings")
     >=> NonStrict.compileNonStrictBindings False
@@ -212,8 +233,14 @@ compileReadableToPlc =
     >=> lowerTerm
 
 --- | Compile a 'Term' into a PLC Term. Note: the result *does* have globally unique names.
-compileTerm :: Compiling m e uni fun a
-            => Term TyName Name uni fun a -> m (PLCTerm uni fun a)
+compileTerm ::
+  ( Compiling m e uni fun a
+  , Show a
+  , Show fun
+  , PLC.Everywhere uni Show
+  , PLC.Contains uni ()
+  )
+  => Term TyName Name uni fun a -> m (PLCTerm uni fun a)
 compileTerm =
   (<$ logVerbose "!!! compileToReadable")
   >=> compileToReadable

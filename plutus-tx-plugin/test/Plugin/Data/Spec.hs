@@ -40,11 +40,11 @@ monoData = testNested "monomorphic" [
   , goldenPir "monoConstructor" monoConstructor
   , goldenPir "monoConstructed" monoConstructed
   , goldenPir "monoCase" monoCase
-  , goldenUEval "monoConstDest" [ toUPlc monoCase, toUPlc monoConstructed ]
+  , goldenUEval "monoConstDest" [ toUPlc stableMonoCase, toUPlc monoConstructed ]
   , goldenPir "defaultCase" defaultCase
   , goldenPir "irrefutableMatch" irrefutableMatch
   , goldenPir "atPattern" atPattern
-  , goldenUEval "monoConstDestDefault" [ toUPlc monoCase, toUPlc monoConstructed ]
+  , goldenUEval "monoConstDestDefault" [ toUPlc stableMonoCase, toUPlc monoConstructed ]
   , goldenPir "monoRecord" monoRecord
   , goldenPir "recordNewtype" recordNewtype
   , goldenPir "nonValueCase" nonValueCase
@@ -180,20 +180,20 @@ newtype ParamNewtype a = ParamNewtype (Maybe a)
 
 paramNewtype :: CompiledCode (ParamNewtype Integer -> ParamNewtype Integer)
 paramNewtype = plc (Proxy @"paramNewtype") (\(x ::ParamNewtype Integer) -> x)
-
+--
 recursiveTypes :: TestNested
 recursiveTypes = testNested "recursive" [
     goldenPir "listConstruct" listConstruct
     , goldenPir "listConstruct2" listConstruct2
     , goldenPir "listConstruct3" listConstruct3
     , goldenPir "listMatch" listMatch
-    , goldenUEval "listConstDest" [ toUPlc listMatch, toUPlc stableListConstruct ]
-    , goldenUEval "listConstDest2" [ toUPlc listMatch, toUPlc listConstruct2 ]
+    , goldenUEval "listConstDest" [ toUPlc stableListMatch, toUPlc stableListConstruct ]
+    , goldenUEval "listConstDest2" [ toUPlc stableListMatch, toUPlc listConstruct2 ]
     , goldenPir "ptreeConstruct" ptreeConstruct
     , goldenPir "ptreeMatch" ptreeMatch
-    , goldenUEval "ptreeConstDest" [ toUPlc ptreeMatch, toUPlc ptreeConstruct ]
-    , goldenUEval "polyRecEval" [ toUPlc polyRec, toUPlc ptreeConstruct ]
-    , goldenUEval "ptreeFirstEval" [ toUPlc ptreeFirst, toUPlc ptreeConstruct ]
+    , goldenUEval "ptreeConstDest" [ toUPlc stablePtreeMatch, toUPlc ptreeConstruct ]
+    , goldenUEval "polyRecEval" [ toUPlc stablePolyRec, toUPlc ptreeConstruct ]
+    , goldenUEval "ptreeFirstEval" [ toUPlc stablePtreeFirst, toUPlc ptreeConstruct ]
     , goldenUEval "sameEmptyRoseEval" [ toUPlc sameEmptyRose, toUPlc emptyRoseConstruct ]
     , goldenUPlc "sameEmptyRose" sameEmptyRose
   ]

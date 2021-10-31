@@ -22,8 +22,8 @@ import           Data.Proxy
 
 laziness :: TestNested
 laziness = testNested "Laziness" [
-    goldenPir "joinError" joinErrorPir
-    , goldenUEval "joinErrorEval" [ toUPlc joinErrorPir, toUPlc stableTrue, toUPlc stableFalse ]
+    goldenPir "joinError" stableJoinError
+    , goldenUEval "joinErrorEval" [ toUPlc stableJoinError, toUPlc stableTrue, toUPlc stableFalse ]
     , goldenPir "lazyDepUnit" lazyDepUnit
   ]
 
