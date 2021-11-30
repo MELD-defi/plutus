@@ -104,11 +104,6 @@
     )
     (termbind
       (strict)
-      (vardecl trace (all a (type) (fun (con string) (fun a a))))
-      (builtin trace)
-    )
-    (termbind
-      (strict)
       (vardecl traceBool (fun (con string) (fun (con string) (fun Bool Bool))))
       (lam
         trueLabel
@@ -123,9 +118,9 @@
               [
                 [
                   { [ Bool_match c ] (all dead (type) Bool) }
-                  (abs dead (type) [ [ { trace Bool } trueLabel ] True ])
+                  (abs dead (type) True)
                 ]
-                (abs dead (type) [ [ { trace Bool } falseLabel ] False ])
+                (abs dead (type) False)
               ]
               (all dead (type) dead)
             }

@@ -38,9 +38,6 @@
       (builtin ifThenElse)
     )
     (termbind
-      (strict) (vardecl reconstructCaseError (con string)) (con string "PT1")
-    )
-    (termbind
       (strict)
       (vardecl snd (all a (type) (all b (type) (fun [ [ (con pair) a ] b ] b))))
       (builtin sndPair)
@@ -49,11 +46,6 @@
       (strict)
       (vardecl tail (all a (type) (fun [ (con list) a ] [ (con list) a ])))
       (builtin tailList)
-    )
-    (termbind
-      (strict)
-      (vardecl trace (all a (type) (fun (con string) (fun a a))))
-      (builtin trace)
     )
     (termbind (strict) (vardecl unitval (con unit)) (con unit ()))
     (termbind
@@ -99,16 +91,7 @@
               (vardecl x [ [ Tuple2 a ] b ])
               [
                 { error [ [ Tuple2 a ] b ] }
-                [
-                  {
-                    [
-                      Unit_match
-                      [ [ { trace Unit } reconstructCaseError ] Unit ]
-                    ]
-                    (con unit)
-                  }
-                  unitval
-                ]
+                [ { [ Unit_match Unit ] (con unit) } unitval ]
               ]
             )
             (lam
@@ -272,15 +255,7 @@
             (vardecl x [ Maybe a ])
             [
               { error [ Maybe a ] }
-              [
-                {
-                  [
-                    Unit_match [ [ { trace Unit } reconstructCaseError ] Unit ]
-                  ]
-                  (con unit)
-                }
-                unitval
-              ]
+              [ { [ Unit_match Unit ] (con unit) } unitval ]
             ]
           )
           (lam

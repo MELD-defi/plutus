@@ -733,6 +733,9 @@ compileExpr e = withContextM 2 (sdToTxt $ "Compiling expr:" GHC.<+> GHC.ppr e) $
                     GHC.$+$ (GHC.ppr $ GHC.idDetails n)
                     GHC.$+$ (GHC.ppr $ GHC.realIdUnfolding n)
 
+        -- Sad hack to remove traces
+        GHC.Var f `GHC.App` _ `GHC.App` _ `GHC.App` a | GHC.getOccString f == "trace" -> compileExpr a
+
         -- ignoring applications to types of 'RuntimeRep' kind, see Note [Unboxed tuples]
         l `GHC.App` GHC.Type t | GHC.isRuntimeRepKindedTy t -> compileExpr l
         -- arg can be a type here, in which case it's a type instantiation
